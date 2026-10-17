@@ -25,7 +25,7 @@ Each plugin exports a function named `plugin_entry`.
 
 The host uses `libloading` to find this function in the plugin library. The function gives the host the plugin name and its string operation.
 
-The host sends input as a C string.
+The host sends input as a pointer and a byte length. The plugin reads the host input without a copy.
 
 The plugin returns its result as a C string. The plugin also gives the host a function to free that result.
 

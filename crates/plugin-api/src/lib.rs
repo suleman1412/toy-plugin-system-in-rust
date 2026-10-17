@@ -1,6 +1,13 @@
 use core::ffi::c_char;
 
-pub const PLUGIN_ABI_VERSION: u32 = 1;
+pub const PLUGIN_ABI_VERSION: u32 = 2;
+
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct InputBuffer {
+    pub ptr: *const u8,
+    pub len: usize,
+}
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -21,6 +28,6 @@ impl PluginString {
 pub struct PluginDescriptor {
     pub abi_version: u32,
     pub name: *const c_char,
-    pub transform: unsafe extern "C" fn(input_ptr: *const c_char) -> PluginString,
+    pub transform: unsafe extern "C" fn(input: InputBuffer) -> PluginString,
     pub free_string: unsafe extern "C" fn(value: PluginString),
 }

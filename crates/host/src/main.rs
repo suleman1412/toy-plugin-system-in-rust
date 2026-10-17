@@ -1,8 +1,8 @@
 use libloading::{Library, Symbol};
-use plugin_api::{PluginDescriptor, PLUGIN_ABI_VERSION};
+use plugin_api::{InputBuffer, PluginDescriptor, PLUGIN_ABI_VERSION};
 use std::env;
 use std::error::Error;
-use std::ffi::{CStr, CString};
+use std::ffi::{CStr};
 use std::path::PathBuf;
 
 type PluginEntry = unsafe extern "C" fn() -> PluginDescriptor;
@@ -27,8 +27,12 @@ fn run() -> Result<(), Box<dyn Error>> {
         .to_string_lossy()
         .into_owned();
 
-    let input = CString::new(input)?;
+    let input_buffer = InputBuffer {
+        ptr: input.as_ptr(),
+        len: input.len(),
+    };
 
+    println!("Host ptr: {:?}", input_buffer.ptr);
     unsafe {
         let library = Library::new(plugin_path)?;
         let entry: Symbol<PluginEntry> = library.get(b"plugin_entry")?;
@@ -46,7 +50,7 @@ fn run() -> Result<(), Box<dyn Error>> {
         }
 
         let name = CStr::from_ptr(descriptor.name).to_string_lossy();
-        let output = (descriptor.transform)(input.as_ptr());
+        let output = (descriptor.transform)(input_buffer);
 
         if output.ptr.is_null() {
             return Err(format!("plugin {name} returned a null output string").into());
