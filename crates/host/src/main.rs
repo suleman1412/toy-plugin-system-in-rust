@@ -32,7 +32,7 @@ fn run() -> Result<(), Box<dyn Error>> {
         len: input.len(),
     };
 
-    println!("Host ptr: {:?}", input_buffer.ptr);
+    println!("Input in Host: {:?}", input_buffer);
     unsafe {
         let library = Library::new(plugin_path)?;
         let entry: Symbol<PluginEntry> = library.get(b"plugin_entry")?;

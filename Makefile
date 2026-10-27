@@ -12,3 +12,6 @@ size:
 
 uppercase:
 	cargo run -p host -- "$(UPPERCASE-PLUGIN)" "$(TEXT)"
+
+bench:
+	cargo bench

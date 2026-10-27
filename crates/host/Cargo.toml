@@ -6,3 +6,10 @@ edition = "2024"
 [dependencies]
 libloading = "0.8"
 plugin-api = { path = "../plugin-api" }
+
+[dev-dependencies]
+criterion = "0.5"
+
+[[bench]]
+name = "plugin_round_trip"
+harness = false

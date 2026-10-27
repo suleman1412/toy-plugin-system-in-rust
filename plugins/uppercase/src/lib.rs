@@ -19,6 +19,7 @@ unsafe extern "C" fn transform(input: InputBuffer) -> PluginString {
         return PluginString::null();
     }
 
+    // println!("Input in plugin: {:?}", input);
     let input = unsafe { std::slice::from_raw_parts(input.ptr, input.len) };
     let input = String::from_utf8_lossy(input);
     let res = match CString::new(input.to_uppercase()) {
@@ -27,7 +28,6 @@ unsafe extern "C" fn transform(input: InputBuffer) -> PluginString {
         },
         Err(_) => PluginString::null(),
     };
-    println!("{:?}", res.ptr);
     res
 }
 
