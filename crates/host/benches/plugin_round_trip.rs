@@ -43,6 +43,26 @@ impl LoadedPlugin {
         unsafe { (self.descriptor.free_string)(output) };
         output_text
     }
+
+    fn with_borrowed_output<R>(&self, input: &str, consume: impl FnOnce(&str) -> R) -> R {
+        let output = unsafe {
+            (self.descriptor.transform)(InputBuffer {
+                ptr: input.as_ptr(),
+                len: input.len(),
+            })
+        };
+        assert!(!output.ptr.is_null(), "plugin returned null output");
+
+        // Valid UTF-8 is borrowed by to_string_lossy; the ASCII fixtures allocate nothing here.
+        // The consumer finishes before the plugin allocation is freed. It cannot return a
+        // reference tied to this temporary borrow. Benchmark consumers must not panic.
+        let result = {
+            let output_text = unsafe { CStr::from_ptr(output.ptr) }.to_string_lossy();
+            consume(output_text.as_ref())
+        };
+        unsafe { (self.descriptor.free_string)(output) };
+        result
+    }
 }
 
 fn uppercase_plugin_path() -> PathBuf {
@@ -62,6 +82,13 @@ fn benchmark_round_trip(c: &mut Criterion) {
         ("64KiB", "a".repeat(64 * 1024)),
     ];
 
+    // Check the entire result outside the timed loops for both ownership paths.
+    for (_, input) in &inputs {
+        let expected = input.to_uppercase();
+        assert_eq!(plugin.transform(input), expected);
+        plugin.with_borrowed_output(input, |output| assert_eq!(output, expected));
+    }
+
     let mut direct_group = c.benchmark_group("direct_rust");
     for (name, input) in &inputs {
         direct_group.throughput(Throughput::Bytes(input.len() as u64));
@@ -79,6 +106,19 @@ fn benchmark_round_trip(c: &mut Criterion) {
         });
     }
     plugin_group.finish();
+
+    let mut borrowed_group = c.benchmark_group("plugin_borrowed_output");
+    for (name, input) in &inputs {
+        borrowed_group.throughput(Throughput::Bytes(input.len() as u64));
+        borrowed_group.bench_with_input(BenchmarkId::from_parameter(name), input, |b, input| {
+            b.iter(|| {
+                plugin.with_borrowed_output(black_box(input), |output| {
+                    black_box(output);
+                })
+            })
+        });
+    }
+    borrowed_group.finish();
 }
 
 criterion_group!(benches, benchmark_round_trip);
