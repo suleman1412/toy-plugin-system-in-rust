@@ -3,6 +3,7 @@ members = [
     "crates/host",
     "crates/plugin-api",
     "plugins/uppercase",
-    "plugins/size"
+    "plugins/size",
+    "plugins/document"
 ]
 resolver = "3"
