@@ -9,6 +9,7 @@ Current plugins:
 ```text
 uppercase  Convert text to uppercase.
 size       Count characters in text.
+document   Count tags in a document input.
 ```
 
 ## Project Layout
@@ -16,6 +17,8 @@ size       Count characters in text.
 ```text
 crates/host/          Host that loads and runs plugins
 crates/plugin-api/    Shared C ABI definitions
+  src/types.rs        ABI data types and buffers
+  src/descriptors.rs  ABI function descriptors
 plugins/*             Individual plugin definition
 ```
 
@@ -28,6 +31,10 @@ The host uses `libloading` to find this function in the plugin library. The func
 The host sends input as a pointer and a byte length. The plugin reads the host input without a copy.
 
 The plugin returns its result as a C string. The plugin also gives the host a function to free that result.
+
+The document plugin exports `document_plugin_entry`. Its `count_tags` function receives a `DocumentInput` value. `DocumentInput` contains buffers for the title and tags, plus a document kind.
+
+All plugin descriptors use the shared `PLUGIN_ABI_VERSION`. A descriptor change requires an ABI version change.
 
 ## Run A Plugin
 
